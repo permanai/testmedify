@@ -11,6 +11,11 @@
                 <div class="card-header">Master Item</div>
 
                 <div class="card-body">
+                    @if(!empty($data->foto))
+                    <div class="mb-3 text-center">
+                        <img src="{{ asset('storage/master_items/' . $data->foto) }}" alt="Foto Item" style="max-width: 300px; max-height: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                    </div>
+                    @endif
                     <table>
                         <tr>
                             <th>Nama</th>
@@ -41,6 +46,19 @@
                             <th>Jenis</th>
                             <td>:</td>
                             <td>{{$data->jenis}}</td>
+                        </tr>
+                        <tr>
+                            <th>Kategori</th>
+                            <td>:</td>
+                            <td>
+                                @if($data->kategoris->count() > 0)
+                                    @foreach($data->kategoris as $kat)
+                                    <a href="{{url('kategori/view')}}/{{$kat->id}}" class="badge bg-primary text-decoration-none" style="margin-right:4px;">{{$kat->nama}}</a>
+                                    @endforeach
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                         </tr>
                     </table>
                     <a class="btn btn-info" href="{{url('master-items/form/edit')}}/{{$data->id}}">Edit</a>

@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\MasterItemsExport;
+use App\Models\Kategori;
 use App\Models\MasterItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MasterItemsController extends Controller
 {
@@ -23,9 +27,10 @@ class MasterItemsController extends Controller
 
         if (!empty($kode)) $data_search = $data_search->where('kode', $kode);
         if (!empty($nama)) $data_search = $data_search->where('nama', 'LIKE', '%' . $nama . '%');
-        if (!empty($hargamin)) $data_search = $data_search->where('harga_beli', '>=', $hargamin)->where('harga_beli', '<=', $hargamax);
+        if ($hargamin !== null && $hargamin !== '') $data_search = $data_search->where('harga_beli', '>=', $hargamin);
+        if ($hargamax !== null && $hargamax !== '') $data_search = $data_search->where('harga_beli', '<=', $hargamax);
 
-        $data_search = $data_search->select('kode', 'nama', 'jenis', 'harga_beli', 'laba', 'supplier')->orderBy('id')->get();
+        $data_search = $data_search->select('kode', 'nama', 'jenis', 'harga_beli', 'laba', 'supplier', 'foto')->orderBy('id')->get();
 
 
         return json_encode([
@@ -38,17 +43,21 @@ class MasterItemsController extends Controller
     {
         if ($method == 'new') {
             $item = [];
+            $selectedKategoris = [];
         } else {
-            $item = MasterItem::find($id);
+            $item = MasterItem::with('kategoris')->find($id);
+            $selectedKategoris = $item->kategoris->pluck('id')->toArray();
         }
         $data['item'] = $item;
         $data['method'] = $method;
+        $data['kategoris'] = Kategori::orderBy('nama')->get();
+        $data['selectedKategoris'] = $selectedKategoris;
         return view('master_items.form.index', $data);
     }
 
     public function singleView($kode)
     {
-        $data['data'] = MasterItem::where('kode', $kode)->first();
+        $data['data'] = MasterItem::with('kategoris')->where('kode', $kode)->first();
         return view('master_items.single.index', $data);
     }
 
@@ -71,7 +80,21 @@ class MasterItemsController extends Controller
         $data_item->kode = $kode;
         $data_item->supplier = $request->supplier;
         $data_item->jenis = $request->jenis;
+        if ($request->hasFile('foto')) {
+            if ($method == 'edit' && $data_item->foto) {
+                Storage::disk('public')->delete('master_items/' . $data_item->foto);
+            }
+            $file = $request->file('foto');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('master_items', $filename, 'public');
+            $data_item->foto = $filename;
+        }
+
         $data_item->save();
+
+        // Sync kategori many-to-many
+        $kategori_ids = $request->input('kategori_ids', []);
+        $data_item->kategoris()->sync($kategori_ids);
 
         return redirect('master-items');
     }
@@ -80,6 +103,12 @@ class MasterItemsController extends Controller
     {
         MasterItem::find($id)->delete();
         return redirect('master-items');
+    }
+
+    public function exportExcel()
+    {
+        $fileName = 'master_items_' . now()->format('Ymd_His') . '.xlsx';
+        return Excel::download(new MasterItemsExport, $fileName);
     }
 
     public function updateRandomData()

@@ -1,4 +1,4 @@
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     @csrf
     @if($method == 'edit')
     <div class="form-group">
@@ -31,7 +31,7 @@
             <option @if($selected == 'Bukulapuk') selected @endif>Bukulapuk</option>
             <option @if($selected == 'TokoBagas') selected @endif>TokoBagas</option>
             <option @if($selected == 'E Commurz') selected @endif>E Commurz</option>
-            <optio @if($selected == 'Blublu') selected @endif>Blublu</option>
+            <option @if($selected == 'Blublu') selected @endif>Blublu</option>
         </select>
     </div>
 
@@ -43,9 +43,30 @@
             <option @if($selected == 'Obat') selected @endif>Obat</option>
             <option @if($selected == 'Alkes') selected @endif>Alkes</option>
             <option @if($selected == 'Matkes') selected @endif>Matkes</option>
-            <optio @if($selected == 'Umum') selected @endif>Umum</option>
-            <optio @if($selected == 'ATK') selected @endif>ATK</option>
+            <option @if($selected == 'Umum') selected @endif>Umum</option>
+            <option @if($selected == 'ATK') selected @endif>ATK</option>
         </select>
+    </div>
+
+    <div class="form-group">
+        <label>Kategori</label>
+        <select id="select-kategori" class="form-control" name="kategori_ids[]" multiple>
+            @foreach($kategoris as $kat)
+            <option value="{{$kat->id}}" @if(in_array($kat->id, $selectedKategoris)) selected @endif>{{$kat->kode}} - {{$kat->nama}}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Foto</label>
+        @if($method == 'edit' && !empty($item->foto))
+        <div class="mb-2">
+            <img src="{{ asset('storage/master_items/' . $item->foto) }}" alt="Foto Item" style="max-width: 200px; max-height: 200px; border-radius: 4px;">
+            <br>
+            <small class="text-muted">Foto saat ini. Upload baru untuk mengganti.</small>
+        </div>
+        @endif
+        <input type="file" class="form-control" name="foto" accept="image/*">
     </div>
 
     <button class="btn btn-primary mt-3">Submit</button>

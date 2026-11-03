@@ -10,4 +10,9 @@ class MasterItem extends Model
 {
     use HasFactory;
     use SoftDeletes;
+
+    public function kategoris()
+    {
+        return $this->belongsToMany(Kategori::class, 'kategori_master_item', 'master_item_id', 'kategori_id')->withTimestamps();
+    }
 }
